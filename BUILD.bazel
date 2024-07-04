@@ -1,6 +1,6 @@
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@buildifier_prebuilt//:rules.bzl", "buildifier")
-load("@pybind11_bazel//:build_defs.bzl", "pybind_library")
+load("@pybind11_bazel//:build_defs.bzl", "PYBIND_DEPS", "pybind_library")
 load("@pypi//:requirements.bzl", "requirement")
 load("@python_3_9//:defs.bzl", "interpreter", "py_binary")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
@@ -34,15 +34,21 @@ compile_pip_requirements(
     requirements_windows = "requirements_windows.txt",
 )
 
-cc_py_binary(
+pybind_library(
+    name = "plotter",
+    srcs = ["plotter.h"],
+    data = [
+        requirement("numpy"),
+        requirement("matplotlib"),
+    ],
+    includes = ["//examples/"],
+    deps = ["@rules_python//python/cc:current_py_cc_libs"],
+)
+
+cc_binary(
     name = "plot",
     srcs = ["plot.cpp"],
-    py_deps = [
-        requirement("matplotlib"),
-        requirement("numpy"),
-    ],
     deps = [
         ":plotter",
-        "@rules_python//python/cc:current_py_cc_libs",
     ],
 )
