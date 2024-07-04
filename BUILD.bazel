@@ -1,0 +1,48 @@
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@buildifier_prebuilt//:rules.bzl", "buildifier")
+load("@pybind11_bazel//:build_defs.bzl", "pybind_library")
+load("@pypi//:requirements.bzl", "requirement")
+load("@python_3_9//:defs.bzl", "interpreter", "py_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_python//python:pip.bzl", "compile_pip_requirements")
+load("//:hermetic_python.bzl", "cc_py_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+buildifier(
+    name = "buildifier.check",
+    exclude_patterns = [
+        "./.git/*",
+    ],
+    lint_mode = "warn",
+    mode = "diff",
+)
+
+exports_files([
+    ".bazelversion",
+    ".gitignore",
+    ".bazelrc",
+    "MODULE.bazel",
+    "MODULE.bazel.lock",
+    "WORKSPACE",
+])
+
+compile_pip_requirements(
+    name = "requirements",
+    src = "requirements.in",
+    requirements_txt = "requirements_lock.txt",
+    requirements_windows = "requirements_windows.txt",
+)
+
+cc_py_binary(
+    name = "plot",
+    srcs = ["plot.cpp"],
+    py_deps = [
+        requirement("matplotlib"),
+        requirement("numpy"),
+    ],
+    deps = [
+        ":plotter",
+        "@rules_python//python/cc:current_py_cc_libs",
+    ],
+)
