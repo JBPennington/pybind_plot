@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+bazel-bin
+bazel-out
+bazel-pybind_plot
+bazel-testlogs
+
+MODULE.bazel.lock
+
+.clwb
