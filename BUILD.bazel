@@ -5,7 +5,7 @@ load("@pypi//:requirements.bzl", "requirement")
 load("@python_3_9//:defs.bzl", "interpreter", "py_binary")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 load("@rules_python//python:pip.bzl", "compile_pip_requirements")
-load("//:hermetic_python.bzl", "cc_py_binary")
+load("//:hermetic_python.bzl", "cc_py_binary", "py_embedded_libs")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -34,15 +34,25 @@ compile_pip_requirements(
     requirements_windows = "requirements_windows.txt",
 )
 
+py_embedded_libs(
+    name = "embedded_paths",
+    deps = [
+        requirement("matplotlib"),
+        requirement("numpy"),
+    ],
+)
+
 pybind_library(
     name = "plotter",
     srcs = ["plotter.h"],
     data = [
-        requirement("numpy"),
-        requirement("matplotlib"),
+        ":embedded_paths",
     ],
     includes = ["//examples/"],
-    deps = ["@rules_python//python/cc:current_py_cc_libs"],
+    deps = [
+        "@bazel_tools//tools/cpp/runfiles",
+        "@rules_python//python/cc:current_py_cc_libs",
+    ],
 )
 
 cc_binary(
@@ -50,5 +60,23 @@ cc_binary(
     srcs = ["plot.cpp"],
     deps = [
         ":plotter",
+    ],
+)
+
+py_embedded_libs(
+    name = "embed_paths",
+    deps = [
+        requirement("scipy"),
+    ],
+)
+
+cc_binary(
+    name = "embed",
+    srcs = ["embed.cpp"],
+    data = [":embed_paths"],
+    deps = [
+        "@bazel_tools//tools/cpp/runfiles",  # needed to resolve python sys.path additions, and python home location
+        "@python_3_9//:python_headers",
+        "@rules_python//python/cc:current_py_cc_libs",
     ],
 )
